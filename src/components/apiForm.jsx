@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Select from 'react-select'
+import { validateData, formatData } from '../utils/validation'
 
 const options = [
     { value: 'alphabets', label: 'Alphabets' },
@@ -9,40 +10,80 @@ const options = [
     { value: 'highestAlphabet', label: 'Highest Alphabet' },
 ]
 
+const DataInput = ({ dataFormat, data, setData, isValidData }) => (
+    <div>
+        <label className='block text-sm font-medium text-gray-700'>
+            {dataFormat === 'comma'
+                ? 'Data (comma-separated)'
+                : 'Data (JSON format)'}
+        </label>
+        <textarea
+            rows={4}
+            value={data}
+            onChange={(e) => setData(e.target.value)}
+            className={`mt-1 block w-full p-3 border rounded-md ${
+                isValidData ? 'border-gray-300' : 'border-red-500'
+            } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            placeholder={
+                dataFormat === 'comma'
+                    ? 'e.g. M,1,334,4'
+                    : '{"data":["M","1","334","4","B"]}'
+            }
+        />
+        {!isValidData && data && (
+            <p className='mt-1 text-red-600 text-sm'>
+                Data must be valid: single alphabets or numbers.
+            </p>
+        )}
+    </div>
+)
+
+const FilteredResponse = ({ response, selectedOptions }) => (
+    <div className='mt-4 p-4 border border-gray-300 rounded-md bg-white'>
+        <h2 className='text-xl font-bold mb-2 text-gray-800'>
+            Filtered Response
+        </h2>
+        <pre className='text-gray-700'>
+            {selectedOptions.some((option) => option.value === 'numbers') && (
+                <div>
+                    <strong>Numbers:</strong>{' '}
+                    {JSON.stringify(response.numbers, null, 2)}
+                </div>
+            )}
+            {selectedOptions.some((option) => option.value === 'alphabets') && (
+                <div>
+                    <strong>Alphabets:</strong>{' '}
+                    {JSON.stringify(response.alphabets, null, 2)}
+                </div>
+            )}
+            {selectedOptions.some(
+                (option) => option.value === 'highestAlphabet',
+            ) && (
+                <div>
+                    <strong>Highest Alphabet:</strong>{' '}
+                    {JSON.stringify(response.highest_alphabet, null, 2)}
+                </div>
+            )}
+        </pre>
+    </div>
+)
+
 const ApiForm = () => {
     const [data, setData] = useState('')
-    const [dataFormat, setDataFormat] = useState('comma') // 'comma' or 'json'
+    const [dataFormat, setDataFormat] = useState('comma')
     const [selectedOptions, setSelectedOptions] = useState([])
     const [response, setResponse] = useState(null)
     const [error, setError] = useState(null)
     const [isValidData, setIsValidData] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    useEffect(() => {
+        setIsValidData(validateData(data, dataFormat))
+    }, [data, dataFormat])
+
     const handleOptionChange = (selected) => {
         setSelectedOptions(selected || [])
     }
-
-    const validateData = (data) => {
-        if (dataFormat === 'comma') {
-            const items = data.split(',').map((item) => item.trim())
-            return items.every((item) => /^[a-zA-Z]$|^\d+$/.test(item))
-        } else if (dataFormat === 'json') {
-            try {
-                const jsonData = JSON.parse(data)
-                return (
-                    Array.isArray(jsonData.data) &&
-                    jsonData.data.every((item) => /^[a-zA-Z]$|^\d+$/.test(item))
-                )
-            } catch {
-                return false
-            }
-        }
-        return false
-    }
-
-    useEffect(() => {
-        setIsValidData(validateData(data))
-    }, [data, dataFormat])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -68,13 +109,7 @@ const ApiForm = () => {
             return
         }
 
-        let formattedData
-        if (dataFormat === 'comma') {
-            formattedData = data.split(',').map((item) => item.trim())
-        } else if (dataFormat === 'json') {
-            const jsonData = JSON.parse(data)
-            formattedData = jsonData.data
-        }
+        const formattedData = formatData(data, dataFormat)
 
         try {
             const res = await fetch(
@@ -102,14 +137,10 @@ const ApiForm = () => {
                 ) && { numbers: result.numbers }),
                 ...(selectedOptions.some(
                     (option) => option.value === 'alphabets',
-                ) && {
-                    alphabets: result.alphabets,
-                }),
+                ) && { alphabets: result.alphabets }),
                 ...(selectedOptions.some(
                     (option) => option.value === 'highestAlphabet',
-                ) && {
-                    highest_alphabet: result.highest_alphabet,
-                }),
+                ) && { highest_alphabet: result.highest_alphabet }),
             }
 
             setResponse(filteredResponse)
@@ -155,31 +186,12 @@ const ApiForm = () => {
                         </button>
                     </div>
                 </div>
-                <div>
-                    <label className='block text-sm font-medium text-gray-700'>
-                        {dataFormat === 'comma'
-                            ? 'Data (comma-separated)'
-                            : 'Data (JSON format)'}
-                    </label>
-                    <textarea
-                        rows={4}
-                        value={data}
-                        onChange={(e) => setData(e.target.value)}
-                        className={`mt-1 block w-full p-3 border rounded-md ${
-                            isValidData ? 'border-gray-300' : 'border-red-500'
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        placeholder={
-                            dataFormat === 'comma'
-                                ? 'e.g. M,1,334,4'
-                                : '{"data":["M","1","334","4","B"]}'
-                        }
-                    />
-                    {!isValidData && data && (
-                        <p className='mt-1 text-red-600 text-sm'>
-                            Data must be valid: single alphabets or numbers.
-                        </p>
-                    )}
-                </div>
+                <DataInput
+                    dataFormat={dataFormat}
+                    data={data}
+                    setData={setData}
+                    isValidData={isValidData}
+                />
                 {isValidData && (
                     <div className='space-y-4'>
                         <label className='block text-sm font-medium text-gray-700'>
@@ -212,41 +224,10 @@ const ApiForm = () => {
             </form>
             {error && <p className='mt-4 text-red-600'>{error}</p>}
             {response && (
-                <div className='mt-4 p-4 border border-gray-300 rounded-md bg-white'>
-                    <h2 className='text-xl font-bold mb-2 text-gray-800'>
-                        Filtered Response
-                    </h2>
-                    <pre className='text-gray-700'>
-                        {selectedOptions.some(
-                            (option) => option.value === 'numbers',
-                        ) && (
-                            <div>
-                                <strong>Numbers:</strong>{' '}
-                                {JSON.stringify(response.numbers, null, 2)}
-                            </div>
-                        )}
-                        {selectedOptions.some(
-                            (option) => option.value === 'alphabets',
-                        ) && (
-                            <div>
-                                <strong>Alphabets:</strong>{' '}
-                                {JSON.stringify(response.alphabets, null, 2)}
-                            </div>
-                        )}
-                        {selectedOptions.some(
-                            (option) => option.value === 'highestAlphabet',
-                        ) && (
-                            <div>
-                                <strong>Highest Alphabet:</strong>{' '}
-                                {JSON.stringify(
-                                    response.highest_alphabet,
-                                    null,
-                                    2,
-                                )}
-                            </div>
-                        )}
-                    </pre>
-                </div>
+                <FilteredResponse
+                    response={response}
+                    selectedOptions={selectedOptions}
+                />
             )}
         </div>
     )
