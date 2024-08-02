@@ -7,7 +7,7 @@ export default function Home() {
             <div className='text-6xl font-extrabold text-blue-700 mb-8'>
                 RA2111003011823
             </div>
-            <div className='w-full max-w-lg p-4 bg-white rounded-lg shadow-lg min-h-[400px] flex flex-col'>
+            <div className='w-full max-w-lg p-4 bg-white rounded-lg shadow-lg'>
                 <ApiForm />
             </div>
         </main>
