@@ -11,6 +11,7 @@ const options = [
 
 const ApiForm = () => {
     const [data, setData] = useState('')
+    const [dataFormat, setDataFormat] = useState('comma') // 'comma' or 'json'
     const [selectedOptions, setSelectedOptions] = useState([])
     const [response, setResponse] = useState(null)
     const [error, setError] = useState(null)
@@ -22,13 +23,26 @@ const ApiForm = () => {
     }
 
     const validateData = (data) => {
-        const items = data.split(',').map((item) => item.trim())
-        return items.every((item) => /^[a-zA-Z]$|^\d+$/.test(item))
+        if (dataFormat === 'comma') {
+            const items = data.split(',').map((item) => item.trim())
+            return items.every((item) => /^[a-zA-Z]$|^\d+$/.test(item))
+        } else if (dataFormat === 'json') {
+            try {
+                const jsonData = JSON.parse(data)
+                return (
+                    Array.isArray(jsonData.data) &&
+                    jsonData.data.every((item) => /^[a-zA-Z]$|^\d+$/.test(item))
+                )
+            } catch {
+                return false
+            }
+        }
+        return false
     }
 
     useEffect(() => {
         setIsValidData(validateData(data))
-    }, [data])
+    }, [data, dataFormat])
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -54,15 +68,21 @@ const ApiForm = () => {
             return
         }
 
+        let formattedData
+        if (dataFormat === 'comma') {
+            formattedData = data.split(',').map((item) => item.trim())
+        } else if (dataFormat === 'json') {
+            const jsonData = JSON.parse(data)
+            formattedData = jsonData.data
+        }
+
         try {
             const res = await fetch(
                 'https://bajaj-qualifier1-backend.onrender.com/bfhl',
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        data: data.split(',').map((item) => item.trim()),
-                    }),
+                    body: JSON.stringify({ data: formattedData }),
                 },
             )
 
@@ -108,16 +128,51 @@ const ApiForm = () => {
             <form onSubmit={handleSubmit} className='space-y-6'>
                 <div>
                     <label className='block text-sm font-medium text-gray-700'>
-                        Data (comma-separated)
+                        Data Input Method
                     </label>
-                    <input
-                        type='text'
+                    <div className='flex space-x-4 mt-1'>
+                        <button
+                            type='button'
+                            onClick={() => setDataFormat('comma')}
+                            className={`px-4 py-2 rounded-md ${
+                                dataFormat === 'comma'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-200 text-gray-800'
+                            }`}
+                        >
+                            Comma-Separated
+                        </button>
+                        <button
+                            type='button'
+                            onClick={() => setDataFormat('json')}
+                            className={`px-4 py-2 rounded-md ${
+                                dataFormat === 'json'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-gray-200 text-gray-800'
+                            }`}
+                        >
+                            JSON
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label className='block text-sm font-medium text-gray-700'>
+                        {dataFormat === 'comma'
+                            ? 'Data (comma-separated)'
+                            : 'Data (JSON format)'}
+                    </label>
+                    <textarea
+                        rows={4}
                         value={data}
                         onChange={(e) => setData(e.target.value)}
                         className={`mt-1 block w-full p-3 border rounded-md ${
                             isValidData ? 'border-gray-300' : 'border-red-500'
                         } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                        placeholder='e.g. M,1,334,4'
+                        placeholder={
+                            dataFormat === 'comma'
+                                ? 'e.g. M,1,334,4'
+                                : '{"data":["M","1","334","4","B"]}'
+                        }
                     />
                     {!isValidData && data && (
                         <p className='mt-1 text-red-600 text-sm'>
