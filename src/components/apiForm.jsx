@@ -17,10 +17,69 @@ const ApiForm = () => {
         setSelectedOptions((prev) => ({ ...prev, [name]: checked }))
     }
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault()
+    //     setError(null)
+    //     setResponse(null)
+
+    //     if (!data.trim()) {
+    //         setError('Input is needed.')
+    //         return
+    //     }
+
+    //     try {
+    //         const res = await fetch(
+    //             'https://bajaj-qualifier1-backend.onrender.com/bfhl',
+    //             {
+    //                 method: 'POST',
+    //                 headers: { 'Content-Type': 'application/json' },
+    //                 body: JSON.stringify({
+    //                     data: data.split(',').map((item) => item.trim()),
+    //                 }),
+    //             },
+    //         )
+
+    //         if (!res.ok) {
+    //             throw new Error('Network response was not ok')
+    //         }
+
+    //         const result = await res.json()
+
+    //         const filteredResponse = {
+    //             is_success: result.is_success,
+    //             user_id: result.user_id,
+    //             email: result.email,
+    //             roll_number: result.roll_number,
+    //             ...(selectedOptions.numbers && { numbers: result.numbers }),
+    //             ...(selectedOptions.alphabets && {
+    //                 alphabets: result.alphabets,
+    //             }),
+    //             ...(selectedOptions.highestAlphabet && {
+    //                 highest_alphabet: result.highest_alphabet,
+    //             }),
+    //         }
+
+    //         setResponse(filteredResponse)
+    //     } catch (err) {
+    //         setError('Failed to fetch response from the server.')
+    //     }
+    // }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError(null)
         setResponse(null)
+
+        if (!data.trim()) {
+            setError('Input is needed.')
+            return
+        }
+
+        // Check if at least one option is selected
+        if (!Object.values(selectedOptions).includes(true)) {
+            setError('Select at least one option.')
+            return
+        }
 
         try {
             const res = await fetch(
@@ -56,7 +115,7 @@ const ApiForm = () => {
 
             setResponse(filteredResponse)
         } catch (err) {
-            setError('Failed to Fetch response from the server.')
+            setError('Failed to fetch response from the server.')
         }
     }
 
@@ -127,7 +186,33 @@ const ApiForm = () => {
             {error && <p className='mt-4 text-red-600'>{error}</p>}
             {response && (
                 <div className='mt-4 p-4 border border-gray-300 rounded-md'>
-                    <pre>{JSON.stringify(response, null, 2)}</pre>
+                    <h2 className='text-xl font-bold mb-2'>
+                        Filtered Response
+                    </h2>
+                    <pre>
+                        {selectedOptions.numbers && (
+                            <div>
+                                <strong>Numbers:</strong>{' '}
+                                {JSON.stringify(response.numbers, null, 2)}
+                            </div>
+                        )}
+                        {selectedOptions.alphabets && (
+                            <div>
+                                <strong>Alphabets:</strong>{' '}
+                                {JSON.stringify(response.alphabets, null, 2)}
+                            </div>
+                        )}
+                        {selectedOptions.highestAlphabet && (
+                            <div>
+                                <strong>Highest Alphabet:</strong>{' '}
+                                {JSON.stringify(
+                                    response.highest_alphabet,
+                                    null,
+                                    2,
+                                )}
+                            </div>
+                        )}
+                    </pre>
                 </div>
             )}
         </div>
