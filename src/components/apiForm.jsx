@@ -1,22 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Select from 'react-select'
+
+const options = [
+    { value: 'alphabets', label: 'Alphabets' },
+    { value: 'numbers', label: 'Numbers' },
+    { value: 'highestAlphabet', label: 'Highest Alphabet' },
+]
 
 const ApiForm = () => {
     const [data, setData] = useState('')
-    const [selectedOptions, setSelectedOptions] = useState({
-        alphabets: false,
-        numbers: false,
-        highestAlphabet: false,
-    })
+    const [selectedOptions, setSelectedOptions] = useState([])
     const [response, setResponse] = useState(null)
     const [error, setError] = useState(null)
     const [isValidData, setIsValidData] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const handleOptionChange = (e) => {
-        const { name, checked } = e.target
-        setSelectedOptions((prev) => ({ ...prev, [name]: checked }))
+    const handleOptionChange = (selected) => {
+        setSelectedOptions(selected || [])
     }
 
     const validateData = (data) => {
@@ -46,7 +48,7 @@ const ApiForm = () => {
             return
         }
 
-        if (!Object.values(selectedOptions).includes(true)) {
+        if (selectedOptions.length === 0) {
             setError('Select at least one option.')
             setIsSubmitting(false)
             return
@@ -75,11 +77,17 @@ const ApiForm = () => {
                 user_id: result.user_id,
                 email: result.email,
                 roll_number: result.roll_number,
-                ...(selectedOptions.numbers && { numbers: result.numbers }),
-                ...(selectedOptions.alphabets && {
+                ...(selectedOptions.some(
+                    (option) => option.value === 'numbers',
+                ) && { numbers: result.numbers }),
+                ...(selectedOptions.some(
+                    (option) => option.value === 'alphabets',
+                ) && {
                     alphabets: result.alphabets,
                 }),
-                ...(selectedOptions.highestAlphabet && {
+                ...(selectedOptions.some(
+                    (option) => option.value === 'highestAlphabet',
+                ) && {
                     highest_alphabet: result.highest_alphabet,
                 }),
             }
@@ -122,56 +130,15 @@ const ApiForm = () => {
                         <label className='block text-sm font-medium text-gray-700'>
                             Select Options to Display
                         </label>
-                        <div className='flex flex-col space-y-2'>
-                            <div className='flex items-center'>
-                                <input
-                                    type='checkbox'
-                                    id='alphabets'
-                                    name='alphabets'
-                                    checked={selectedOptions.alphabets}
-                                    onChange={handleOptionChange}
-                                    className='h-5 w-5 text-blue-600 border-gray-300 rounded'
-                                />
-                                <label
-                                    htmlFor='alphabets'
-                                    className='ml-2 text-gray-800'
-                                >
-                                    Alphabets
-                                </label>
-                            </div>
-                            <div className='flex items-center'>
-                                <input
-                                    type='checkbox'
-                                    id='numbers'
-                                    name='numbers'
-                                    checked={selectedOptions.numbers}
-                                    onChange={handleOptionChange}
-                                    className='h-5 w-5 text-blue-600 border-gray-300 rounded'
-                                />
-                                <label
-                                    htmlFor='numbers'
-                                    className='ml-2 text-gray-800'
-                                >
-                                    Numbers
-                                </label>
-                            </div>
-                            <div className='flex items-center'>
-                                <input
-                                    type='checkbox'
-                                    id='highestAlphabet'
-                                    name='highestAlphabet'
-                                    checked={selectedOptions.highestAlphabet}
-                                    onChange={handleOptionChange}
-                                    className='h-5 w-5 text-blue-600 border-gray-300 rounded'
-                                />
-                                <label
-                                    htmlFor='highestAlphabet'
-                                    className='ml-2 text-gray-800'
-                                >
-                                    Highest Alphabet
-                                </label>
-                            </div>
-                        </div>
+                        <Select
+                            isMulti
+                            options={options}
+                            value={selectedOptions}
+                            onChange={handleOptionChange}
+                            className='basic-single'
+                            classNamePrefix='select'
+                            placeholder='Select options...'
+                        />
                     </div>
                 )}
                 <button
@@ -195,19 +162,25 @@ const ApiForm = () => {
                         Filtered Response
                     </h2>
                     <pre className='text-gray-700'>
-                        {selectedOptions.numbers && (
+                        {selectedOptions.some(
+                            (option) => option.value === 'numbers',
+                        ) && (
                             <div>
                                 <strong>Numbers:</strong>{' '}
                                 {JSON.stringify(response.numbers, null, 2)}
                             </div>
                         )}
-                        {selectedOptions.alphabets && (
+                        {selectedOptions.some(
+                            (option) => option.value === 'alphabets',
+                        ) && (
                             <div>
                                 <strong>Alphabets:</strong>{' '}
                                 {JSON.stringify(response.alphabets, null, 2)}
                             </div>
                         )}
-                        {selectedOptions.highestAlphabet && (
+                        {selectedOptions.some(
+                            (option) => option.value === 'highestAlphabet',
+                        ) && (
                             <div>
                                 <strong>Highest Alphabet:</strong>{' '}
                                 {JSON.stringify(
