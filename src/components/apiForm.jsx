@@ -154,7 +154,7 @@ const ApiForm = () => {
     return (
         <div className='max-w-md mx-auto p-6 bg-gray-100 rounded-lg shadow-lg'>
             <h1 className='text-2xl font-bold mb-6 text-center text-blue-700'>
-                API Form
+                Form
             </h1>
             <form onSubmit={handleSubmit} className='space-y-6'>
                 <div>
