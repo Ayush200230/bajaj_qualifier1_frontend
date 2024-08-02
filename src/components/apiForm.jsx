@@ -56,7 +56,7 @@ const ApiForm = () => {
 
             setResponse(filteredResponse)
         } catch (err) {
-            setError('Failed to fetch response from the server.')
+            setError('Failed to Fetch response from the server.')
         }
     }
 
