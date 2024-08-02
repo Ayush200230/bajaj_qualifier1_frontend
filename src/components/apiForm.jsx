@@ -480,7 +480,7 @@ const ApiForm = () => {
             {error && <p className='mt-4 text-red-600'>{error}</p>}
             {response && (
                 <FilteredResponse
-                    response={fullResponse} // Use fullResponse to render data
+                    response={fullResponse}
                     selectedOptions={selectedOptions}
                 />
             )}
